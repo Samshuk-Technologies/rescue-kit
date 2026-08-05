@@ -1,0 +1,57 @@
+{
+  "name": "rescuekit",
+  "version": "0.1.0",
+  "description": "Production-readiness audit for AI-generated codebases. Scores auth, payments, data, secrets, testing and operations, and emits a shareable report.",
+  "keywords": [
+    "audit",
+    "security",
+    "code-quality",
+    "production-readiness",
+    "ai-generated",
+    "vibe-coding",
+    "static-analysis"
+  ],
+  "homepage": "https://github.com/Samshuk-Technologies/rescue-kit",
+  "bugs": "https://github.com/Samshuk-Technologies/rescue-kit/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Samshuk-Technologies/rescue-kit.git"
+  },
+  "license": "MIT",
+  "author": "Samshuk Technologies (https://samshuk.com)",
+  "type": "module",
+  "bin": {
+    "rescuekit": "./dist/cli.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "dev": "node --experimental-strip-types src/cli.ts",
+    "docs:rules": "npm run build && node scripts/generate-rules-doc.mjs",
+    "docs:check": "npm run build && node scripts/generate-rules-doc.mjs --check",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}
