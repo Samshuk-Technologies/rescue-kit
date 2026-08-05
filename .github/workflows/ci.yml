@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Cancel superseded runs on the same branch rather than paying for both.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test on Node ${{ matrix.node }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # Oldest supported and current LTS. The walker touches the filesystem
+        # directly, so this is worth verifying rather than assuming.
+        node: [20, 22]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Rule reference is up to date
+        # docs/rules.md is generated from the ruleset. A security tool whose
+        # documentation disagrees with its behaviour is worse than an undocumented one.
+        run: node scripts/generate-rules-doc.mjs --check
+
+      - name: Audit this repository with the build we just made
+        # A dogfood smoke test: proves the packaged CLI actually runs.
+        run: node dist/cli.js . --no-color --min-severity high
+
+  package:
+    name: Verify the published package
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build
+
+      - name: Pack and run from the tarball
+        # Catches a broken `files` list or a missing shebang, which unit tests cannot.
+        run: |
+          npm pack
+          mkdir -p /tmp/install-check && cd /tmp/install-check
+          npm init -y > /dev/null
+          npm install "$GITHUB_WORKSPACE"/rescuekit-*.tgz
+          npx rescuekit --version
+          npx rescuekit . --no-color --min-severity critical
